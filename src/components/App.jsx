@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getSearchNews } from '../api/getSearchNews';
 import Searchbar from './searchbar/Searchbar';
 import ImageGallery from './imageGallery/ImageGallery';
@@ -6,69 +6,75 @@ import Button from './button/Button';
 import Loader from './loader/Loader';
 import Modal from './modal/Modal';
 
-class App extends Component {
-  state = {
-    searchText: '',
-    hits: [],
-    totalHits: 0,
-    status: 'idle',
-    currentPage: 1,
-    selectedImage: null,
-    isModalOpen: false,
-  };
-  handleSearch = searchText => {
-    this.setState({ searchText });
-  };
-  handleOpenModal = (selectedImage) => {
-    this.setState({ selectedImage, isModalOpen: true });
-  };
-  handleCloseModal = () => {
-    this.setState({ selectedImage: null, isModalOpen: false });
-  };
-  loadMore = () => {
-    const { searchText, currentPage } = this.state;
+const App = () => {
+  const [searchText, setSearchText] = useState('');
+  const [hits, setHits] = useState([]);
+  const [totalHits, setTotalHits] = useState(0);
+  const [status, setStatus] = useState('idle');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleSearch = useCallback((searchText) => {
+    setSearchText(searchText);
+  }, []);
+
+  const handleOpenModal = useCallback((selectedImage) => {
+    setSelectedImage(selectedImage);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setSelectedImage(null);
+    setIsModalOpen(false);
+  }, []);
+
+  const loadMore = useCallback(() => {
     const nextPage = currentPage + 1;
-    this.setState({ status: 'pending' });
-    getSearchNews(searchText.trim(), nextPage).then(({ hits, totalHits }) =>
-      this.setState(prevState => ({
-        hits: [...prevState.hits, ...hits],
-        totalHits,
-        currentPage: nextPage,
-        status: hits.length >= totalHits ? 'done' : 'fulfilled',
-      }))
-    );
-  };
-  componentDidUpdate(prevProps, prevState) {
-    const text = this.state.searchText.trim();
-    if (prevState.searchText !== text && text) {
-      this.setState({ status: 'pending', hits: [], currentPage: 1 });
-      getSearchNews(text).then(({ hits }) =>
-        this.setState({ hits, status: 'fulfilled' })
-      );
+    setStatus('pending');
+    getSearchNews(searchText.trim(), nextPage)
+      .then(({ hits, totalHits }) => {
+        setHits((prevHits) => [...prevHits, ...hits]);
+        setTotalHits(totalHits);
+        setCurrentPage(nextPage);
+        setStatus(hits.length >= totalHits ? 'done' : 'fulfilled');
+      });
+  }, [currentPage, searchText]);
+
+  useEffect(() => {
+    const text = searchText.trim();
+    if (text) {
+      setStatus('pending');
+      setHits([]);
+      setCurrentPage(1);
+      getSearchNews(text)
+        .then(({ hits }) => {
+          setHits(hits);
+          setStatus('fulfilled');
+        });
     }
-  }
-  render() {
-    const { hits, status, selectedImage, isModalOpen } = this.state;
-    const hasResults = hits.length > 0;
-    return (
-      <div className="container">
-        <Searchbar onSubmit={this.handleSearch} />
-        {hasResults && (
-          <div className="container-list">
-            <ImageGallery hits={hits} openModal={this.handleOpenModal} />
-            {status === 'pending' && <Loader />}
-            {status !== 'done' && <Button onClick={this.loadMore} />}
-          </div>
-        )}
-        {isModalOpen && (
-          <Modal 
-            selectedImage={selectedImage} 
-            onCloseModal={this.handleCloseModal}
-          />
-        )}
-      </div>
-    );
-  }
-}
+  }, [searchText]);
+
+  const hasResults = hits.length > 0;
+
+  return (
+    <div className="container">
+      <Searchbar onSubmit={handleSearch} />
+      {hasResults && (
+        <div className="container-list">
+          <ImageGallery hits={hits} openModal={handleOpenModal} />
+          {status === 'pending' && <Loader />}
+          {status !== 'done' && <Button onClick={loadMore} />}
+        </div>
+      )}
+      {isModalOpen && (
+        <Modal
+          selectedImage={selectedImage}
+          onCloseModal={handleCloseModal}
+        />
+      )}
+    </div>
+  );
+};
 
 export default App;

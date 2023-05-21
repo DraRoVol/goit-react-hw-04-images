@@ -9,54 +9,43 @@ import Modal from './modal/Modal';
 const App = () => {
   const [searchText, setSearchText] = useState('');
   const [hits, setHits] = useState([]);
-  const [totalHits, setTotalHits] = useState(0);
   const [status, setStatus] = useState('idle');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedImage, setSelectedImage] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const handleSearch = useCallback((searchText) => {
+  const handleSearch = useCallback(searchText => {
     setSearchText(searchText);
   }, []);
-
-  const handleOpenModal = useCallback((selectedImage) => {
+  const handleOpenModal = useCallback(selectedImage => {
     setSelectedImage(selectedImage);
     setIsModalOpen(true);
   }, []);
-
   const handleCloseModal = useCallback(() => {
     setSelectedImage(null);
     setIsModalOpen(false);
   }, []);
-
   const loadMore = useCallback(() => {
     const nextPage = currentPage + 1;
     setStatus('pending');
-    getSearchNews(searchText.trim(), nextPage)
-      .then(({ hits, totalHits }) => {
-        setHits((prevHits) => [...prevHits, ...hits]);
-        setTotalHits(totalHits);
-        setCurrentPage(nextPage);
-        setStatus(hits.length >= totalHits ? 'done' : 'fulfilled');
-      });
+    getSearchNews(searchText.trim(), nextPage).then(({ hits, totalHits }) => {
+      setHits(prevHits => [...prevHits, ...hits]);
+      setCurrentPage(nextPage);
+      setStatus(hits.length >= totalHits ? 'done' : 'fulfilled');
+    });
   }, [currentPage, searchText]);
-
   useEffect(() => {
     const text = searchText.trim();
     if (text) {
       setStatus('pending');
       setHits([]);
       setCurrentPage(1);
-      getSearchNews(text)
-        .then(({ hits }) => {
-          setHits(hits);
-          setStatus('fulfilled');
-        });
+      getSearchNews(text).then(({ hits }) => {
+        setHits(hits);
+        setStatus('fulfilled');
+      });
     }
   }, [searchText]);
-
   const hasResults = hits.length > 0;
-
   return (
     <div className="container">
       <Searchbar onSubmit={handleSearch} />
@@ -68,13 +57,9 @@ const App = () => {
         </div>
       )}
       {isModalOpen && (
-        <Modal
-          selectedImage={selectedImage}
-          onCloseModal={handleCloseModal}
-        />
+        <Modal selectedImage={selectedImage} onCloseModal={handleCloseModal} />
       )}
     </div>
   );
 };
-
 export default App;

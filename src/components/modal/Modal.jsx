@@ -16,7 +16,7 @@ const Modal = ({ selectedImage, onCloseModal }) => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  });
   return (
     <div className={cssModule.overlay} onClick={onCloseModal}>
       <div className={cssModule.modal}>

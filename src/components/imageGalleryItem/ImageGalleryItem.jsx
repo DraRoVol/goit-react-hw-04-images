@@ -14,7 +14,6 @@ const ImageGalleryItem = ({ image, onClick }) => {
   );
 };
 ImageGalleryItem.protoType = {
-  key: PropTypes.node.isRequired,
   image: PropTypes.node.isRequired,
   onClick: PropTypes.func.isRequired,
 }
